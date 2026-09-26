@@ -1,0 +1,13 @@
+# ROS 2 Colcon Compilation Artifacts
+build/
+install/
+log/
+
+# Python Edge Environments and Caches
+venv/
+__pycache__/
+*.pyc
+
+# C++ Object Files and Shared Libraries
+*.o
+*.so
