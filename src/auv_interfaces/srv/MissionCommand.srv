@@ -1,0 +1,33 @@
+# Start / Stop / Return / Abort mission commands.
+#
+# A single service (rather than four separate ones, or a topic) because:
+#   - each command is a one-shot request that either succeeds or fails for
+#     a specific, inspectable reason (e.g. "cannot start: vehicle is
+#     disarmed") -- a topic gives the caller no such acknowledgement;
+#   - the commands share an identical accept/reject/state-report shape,
+#     so one parameterised service avoids four near-duplicate service
+#     definitions;
+#   - unlike Set Target Depth, none of these commands run for a variable,
+#     observable duration from the perspective of *this* interface -- the
+#     resulting multi-minute "returning to home" behaviour belongs to
+#     Mission Management (Autonomy Head, item 5), which can itself expose
+#     an action once it exists. This service only validates and triggers
+#     the transition.
+
+uint8 COMMAND_START = 0
+uint8 COMMAND_STOP = 1
+uint8 COMMAND_RETURN = 2
+uint8 COMMAND_ABORT = 3
+
+uint8 command
+---
+uint8 STATUS_DISARMED = 0
+uint8 STATUS_ARMED = 1
+uint8 STATUS_MISSION_ACTIVE = 2
+uint8 STATUS_MISSION_PAUSED = 3
+uint8 STATUS_RETURNING = 4
+uint8 STATUS_FAULT = 5
+
+bool success
+string message
+uint8 resulting_status

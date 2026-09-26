@@ -1,0 +1,19 @@
+# Command the vehicle to dive/rise to a target depth.
+#
+# An action (not a service) because reaching a target depth takes real,
+# variable time (seconds to tens of seconds), during which:
+#   - the operator benefits from continuous feedback of current depth and
+#     distance remaining, rather than an opaque "please wait";
+#   - the operator must be able to cancel mid-dive (e.g. abort a descent
+#     because a target was reacquired shallower) -- services have no
+#     cancellation mechanism, only fire-and-forget or block-until-done.
+
+float64 target_depth
+float64 tolerance
+---
+bool success
+float64 final_depth
+string message
+---
+float64 current_depth
+float64 distance_remaining

@@ -1,0 +1,20 @@
+# Arm or disarm the vehicle.
+#
+# A service (not a topic) because the caller needs a synchronous
+# accept/reject answer with a reason -- e.g. an arm request must be
+# rejectable when the vehicle is in STATUS_FAULT (critical battery).
+# Disarming is always accepted since it is the fail-safe direction and
+# must never be refused.
+
+bool arm
+---
+uint8 STATUS_DISARMED = 0
+uint8 STATUS_ARMED = 1
+uint8 STATUS_MISSION_ACTIVE = 2
+uint8 STATUS_MISSION_PAUSED = 3
+uint8 STATUS_RETURNING = 4
+uint8 STATUS_FAULT = 5
+
+bool success
+string message
+uint8 resulting_status
