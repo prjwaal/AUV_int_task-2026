@@ -11,3 +11,4 @@ __pycache__/
 # C++ Object Files and Shared Libraries
 *.o
 *.so
+AUV/
