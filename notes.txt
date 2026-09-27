@@ -1,0 +1,99 @@
+src/
+	auv_interfaces 
+		msg/VehicleState.msg:  Published on /auv/telemetry (20 Hz)
+			position, orientation, depth, linear_velocity, angular_velocity, battery_voltage, battery_percentage, and status
+		msg/SystemStatus.msg:  Published on /auv/status (2 Hz)
+			operational state (DISARMED, ARMED, MISSION_ACTIVE, ABORTING, FAULT) and status text
+		msg/Heartbeat.msg:     Published on /auv/heartbeat (1 Hz)
+			A lightweight timestamped ping used by the ground station to verify the link is alive.
+		srv/SetArmed.srv:       Used by /auv/arm
+			Request: bool arm $\rightarrow$ Response: bool success, string message
+		srv/MissionCommand.srv:    Used by /auv/mission_command
+			Sends START, STOP, or ABORT commands and returns bool success, string message
+		action/SetTargetDepth.action:      Used by /auv/set_target_depth
+			Defines Goal (target_depth, tolerance), Feedback (current_depth, depth_error), and Result (success, final_depth, message)
+			
+	auv_vehicle
+		qos_profiles.py
+		mission_state_machine.py
+		vehicle_sim_model.py
+		gazebo_adapter.py
+		vehicle_node.py
+		telemetry_publisher.py
+		
+			
+
+.
+├── auv_ground_station
+│   ├── auv_ground_station
+│   │   ├── app.py
+│   │   ├── comms_monitor.py
+│   │   ├── __init__.py
+│   │   ├── main_window.py
+│   │   └── ros_bridge.py
+│   ├── launch
+│   │   ├── full_sim_stack.launch.py
+│   │   ├── full_stack.launch.py
+│   │   └── ground_station.launch.py
+│   ├── package.xml
+│   ├── README.md
+│   ├── resource
+│   │   └── auv_ground_station
+│   ├── setup.cfg
+│   ├── setup.py
+│   └── test
+│       ├── test_comms_monitor.py
+│       ├── test_copyright.py
+│       ├── test_flake8.py
+│       └── test_pep257.py
+├── auv_interfaces
+│   ├── action
+│   │   └── SetTargetDepth.action
+│   ├── CMakeLists.txt
+│   ├── msg
+│   │   ├── Heartbeat.msg
+│   │   ├── SystemStatus.msg
+│   │   └── VehicleState.msg
+│   ├── package.xml
+│   └── srv
+│       ├── MissionCommand.srv
+│       └── SetArmed.srv
+├── auv_simulation
+│   ├── CMakeLists.txt
+│   ├── config
+│   │   └── auv_bridge.yaml
+│   ├── launch
+│   │   └── simulation.launch.py
+│   ├── models
+│   │   └── auv
+│   │       ├── model.config
+│   │       └── model.sdf
+│   ├── package.xml
+│   ├── README.md
+│   └── worlds
+│       └── auv_world.sdf
+└── auv_vehicle
+    ├── auv_vehicle
+    │   ├── gazebo_adapter.py
+    │   ├── __init__.py
+    │   ├── mission_state_machine.py
+    │   ├── qos_profiles.py
+    │   ├── telemetry_publisher.py
+    │   ├── vehicle_node.py
+    │   └── vehicle_sim_model.py
+    ├── launch
+    │   └── telemetry.launch.py
+    ├── package.xml
+    ├── README.md
+    ├── resource
+    │   └── auv_vehicle
+    ├── setup.cfg
+    ├── setup.py
+    └── test
+        ├── test_copyright.py
+        ├── test_flake8.py
+        ├── test_mission_state_machine.py
+        ├── test_pep257.py
+        └── test_vehicle_sim_model.py
+
+
