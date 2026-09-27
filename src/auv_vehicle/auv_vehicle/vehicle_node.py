@@ -37,6 +37,11 @@ frame_id              (string, default "auv_base_link")
 depth_tolerance_m     (double, default 0.15)   default action-goal tolerance
 depth_action_timeout_s (double, default 60.0)  abort a stuck dive after this long
 depth_feedback_period_s (double, default 0.5)  action feedback publish rate
+use_gazebo             (bool, default false)   backend: VehicleSimModel
+                                                (false) or GazeboVehicleAdapter,
+                                                driving a running Gazebo sim
+                                                over /model/auv/cmd_vel +
+                                                /model/auv/odometry (true)
 
 Design notes
 ------------
@@ -76,6 +81,7 @@ from auv_vehicle.mission_state_machine import (
     MissionState,
     MissionStateMachine,
 )
+from auv_vehicle.gazebo_adapter import GazeboVehicleAdapter
 from auv_vehicle.qos_profiles import HEARTBEAT_QOS, STATUS_QOS, TELEMETRY_QOS
 from auv_vehicle.vehicle_sim_model import VehicleSimModel
 
@@ -117,9 +123,21 @@ class VehicleNode(Node):
         self.declare_parameter("depth_tolerance_m", 0.15)
         self.declare_parameter("depth_action_timeout_s", 60.0)
         self.declare_parameter("depth_feedback_period_s", 0.5)
+        self.declare_parameter("use_gazebo", False)
 
         seed = int(self.get_parameter("sim_seed").value)
-        self._model = VehicleSimModel(seed=None if seed < 0 else seed)
+        seed = None if seed < 0 else seed
+
+        # Item 4 (Simulation Environment) integration point: the only
+        # branch in this whole file. Both objects satisfy the same
+        # .step(dt)/.set_target_depth()/.set_armed()/.state interface (see
+        # gazebo_adapter.py), so nothing below this constructor -- timers,
+        # command handlers, the mission FSM -- needs to know or care which
+        # one it got.
+        if bool(self.get_parameter("use_gazebo").value):
+            self._model = GazeboVehicleAdapter(self, seed=seed)
+        else:
+            self._model = VehicleSimModel(seed=seed)
         self._fsm = MissionStateMachine()
 
         initial_armed = bool(self.get_parameter("initial_armed").value)
@@ -178,10 +196,12 @@ class VehicleNode(Node):
             callback_group=cb_group,
         )
 
+        backend = "GazeboVehicleAdapter" if isinstance(self._model, GazeboVehicleAdapter) else "VehicleSimModel"
         self.get_logger().info(
-            f"vehicle_node started (telemetry={tele_hz:.1f}Hz, "
-            f"status={status_hz:.1f}Hz, heartbeat={hb_hz:.1f}Hz, "
-            f"armed={initial_armed}, state={self._fsm.state.name})"
+            f"vehicle_node started (backend={backend}, "
+            f"telemetry={tele_hz:.1f}Hz, status={status_hz:.1f}Hz, "
+            f"heartbeat={hb_hz:.1f}Hz, armed={initial_armed}, "
+            f"state={self._fsm.state.name})"
         )
 
     # ------------------------------------------------------------------ #

@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!--
+  auv_world.sdf
+
+  Minimal underwater arena for the Software Head assessment's Simulation
+  Environment item (item 4). Not a hydrodynamically faithful ocean model —
+  see auv_simulation/README.md — just enough physical realism (gravity +
+  Archimedes buoyancy against a neutrally-buoyant hull) that the vehicle
+  behaves plausibly when driven by GazeboVehicleAdapter's velocity commands,
+  and a seabed + waterline so depth changes are visible on camera for the
+  demo video.
+
+  Launch with: ros2 launch auv_simulation simulation.launch.py
+-->
+<sdf version="1.9">
+  <world name="auv_world">
+
+    <physics name="1ms" type="dartsim">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <!--
+      Archimedes' principle applied to every link with a collision volume.
+      1000 kg/m^3 = fresh water. base_link's mass (model.sdf) is set to
+      volume * 1000, i.e. neutrally buoyant: it neither sinks nor floats
+      under gravity alone, and only moves because VelocityControl commands
+      it — matching the "vehicle only moves when armed/commanded" behaviour
+      the Software Head telemetry/command items already establish.
+    -->
+    <plugin filename="gz-sim-buoyancy-system" name="gz::sim::systems::Buoyancy">
+      <uniform_fluid_density>1000</uniform_fluid_density>
+    </plugin>
+
+    <scene>
+      <ambient>0.35 0.45 0.55 1</ambient>
+      <background>0.1 0.25 0.35 1</background>
+      <grid>false</grid>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.7 0.8 0.85 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.3 0.2 -0.9</direction>
+    </light>
+
+    <!-- Seabed, ~6 m below the surface. -->
+    <model name="seabed">
+      <static>true</static>
+      <pose>0 0 -25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>60 60</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>60 60</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.55 0.5 0.35 1</ambient>
+            <diffuse>0.6 0.55 0.4 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Waterline marker at z=0, visual-only (no collision), purely so the
+         demo video shows depth relative to the surface. -->
+    <model name="waterline">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <transparency>0.85</transparency>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>60 60</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.2 0.5 0.7 0.4</ambient>
+            <diffuse>0.2 0.5 0.7 0.4</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Spawns at depth 0.0 (right at the waterline), matching
+         VehicleSimModel's initial depth so the two backends start
+         identically. -->
+    <include>
+      <uri>model://auv</uri>
+      <name>auv</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+  </world>
+</sdf>

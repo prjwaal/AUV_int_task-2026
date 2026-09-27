@@ -29,6 +29,8 @@ auv_vehicle/
     qos_profiles.py                 # shared QoS profiles, reused by later packages
     vehicle_node.py                 # THE node to launch: telemetry + commands
     telemetry_publisher.py          # telemetry-only node, kept for isolated testing
+    gazebo_adapter.py               # item 4: same interface as vehicle_sim_model,
+                                     # backed by a running Gazebo sim instead
   launch/telemetry.launch.py        # launches vehicle_node (see note below)
   test/test_vehicle_sim_model.py
   test/test_mission_state_machine.py
@@ -125,17 +127,35 @@ ros2 action send_goal /auv/set_target_depth auv_interfaces/action/SetTargetDepth
 | `depth_action_timeout_s`   | `60.0`           | Abort a stuck dive after this long            |
 | `depth_feedback_period_s`  | `0.5`            | How often `SetTargetDepth` feedback is published |
 
+## Simulation backend (item 4)
+
+`vehicle_node` doesn't simulate anything itself — it delegates entirely to
+whichever object satisfies `.step(dt) / .set_target_depth() /
+.set_armed() / .state`. The `use_gazebo` parameter picks which one:
+
+| `use_gazebo` | Backend                                    | Needs running          |
+|--------------|----------------------------------------------|-------------------------|
+| `false` (default) | `VehicleSimModel` — pure-Python plant model | nothing else            |
+| `true`       | `GazeboVehicleAdapter` — commands/reads a real Gazebo sim | `ros2 launch auv_simulation simulation.launch.py` |
+
+```bash
+ros2 launch auv_simulation simulation.launch.py &
+ros2 launch auv_vehicle telemetry.launch.py use_gazebo:=true initial_armed:=true sim_seed:=42
+```
+
+or, in one command: `ros2 launch auv_ground_station full_sim_stack.launch.py`.
+See `auv_simulation/README.md` for what's actually in the Gazebo world and
+why it's built the way it is.
+
 ## Design decisions
 
 - **Simulation is decoupled from ROS wiring.** `VehicleSimModel` has no
   rclpy import and is unit-tested directly (`test/test_vehicle_sim_model.py`,
   6 tests, runnable with plain `pytest` — no ROS environment needed). The
   node's job is only parameters, timers, message construction and QoS.
-  When the Simulation Environment item is integrated (Gazebo/Webots), only
-  the state *source* inside `telemetry_publisher.py` changes — swap the
-  `self._model.step(dt)` call for a subscription callback fed by simulator
-  ground truth — while every QoS/message/parameter decision here is
-  untouched.
+  This is exactly what let the Simulation Environment item (above) land as
+  a new backend behind the same interface rather than a rewrite: every
+  QoS/message/parameter decision in this file was untouched by it.
 - **`status` is duplicated on `VehicleState`** (mirroring the authoritative
   `/auv/status` channel) so a consumer that only needs telemetry doesn't
   also have to subscribe to the status topic, while `/auv/status` remains
@@ -181,17 +201,9 @@ cd src/auv_vehicle
 python3 -m pytest test/test_vehicle_sim_model.py -v
 ```
 
-## Next components (not yet implemented here)
+## Known simplifications, worth naming in the writeup
 
-- **Ground Station** (item 3): subscribes to all three telemetry topics
-  and calls the two services + one action above; flags a comms failure
-  when no `/auv/heartbeat` is seen within `N / heartbeat_rate_hz` seconds.
-- **Simulation Environment** (item 4, Gazebo): replaces `VehicleSimModel`
-  as the telemetry source, as described in the Design decisions section
-  above — the command services/action are unaffected since they only ever
-  call `VehicleSimModel.set_armed()`/`.set_target_depth()`, whatever is
-  backing those calls.
-- **Known simplification, worth naming in the writeup:** entering
+- **Entering
   `FAULT` does not currently auto-trigger a return-to-surface; it only
   blocks new arming and forces the operator to explicitly re-`START`. A
   real system would likely auto-issue an internal ABORT on critical

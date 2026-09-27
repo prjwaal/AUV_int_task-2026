@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>auv_ground_station</name>
+  <version>0.1.0</version>
+  <description>
+    Ground Station GUI (Software Head, item 3): monitors vehicle telemetry
+    and status, indicates communication/system failures via heartbeat
+    staleness, and sends Arm/Disarm, Start/Stop/Return/Abort, and
+    Set Target Depth commands. Built with PySide6.
+  </description>
+  <maintainer email="you@example.com">Your Name</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>auv_interfaces</depend>
+  <depend>auv_vehicle</depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <!-- full_sim_stack.launch.py includes auv_simulation's launch file.
+       Not a hard dependency of the GUI itself — full_stack.launch.py
+       (VehicleSimModel backend) works without auv_simulation installed
+       at all — but declared so `rosdep`/colcon see the relationship. -->
+  <exec_depend>auv_simulation</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

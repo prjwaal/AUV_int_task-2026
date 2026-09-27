@@ -1,0 +1,28 @@
+# ros_gz_bridge parameter_bridge config.
+#
+# Only three topics cross the ROS 2 / Gazebo Transport boundary, and each
+# is one-directional -- there is no reason to pay for bidirectional bridging
+# of a topic only one side ever needs:
+#
+#   cmd_vel   : ROS 2 -> Gazebo   (GazeboVehicleAdapter's control law out)
+#   odometry  : Gazebo -> ROS 2   (ground-truth state in)
+#   clock     : Gazebo -> ROS 2   (so nodes launched with use_sim_time:=true
+#                                  advance on simulation time, not wall time)
+
+- ros_topic_name: "/model/auv/cmd_vel"
+  gz_topic_name: "/model/auv/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/model/auv/odometry"
+  gz_topic_name: "/model/auv/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS

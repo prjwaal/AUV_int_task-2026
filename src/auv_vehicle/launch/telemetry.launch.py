@@ -10,6 +10,11 @@ affect what telemetry reports.
 Usage:
     ros2 launch auv_vehicle telemetry.launch.py
     ros2 launch auv_vehicle telemetry.launch.py initial_armed:=true telemetry_rate_hz:=50.0
+
+    # Backed by a running Gazebo simulation (see auv_simulation) instead of
+    # the pure-Python VehicleSimModel:
+    ros2 launch auv_simulation simulation.launch.py &
+    ros2 launch auv_vehicle telemetry.launch.py use_gazebo:=true initial_armed:=true
 """
 
 from launch import LaunchDescription
@@ -29,6 +34,13 @@ def generate_launch_description():
             DeclareLaunchArgument("depth_tolerance_m", default_value="0.15"),
             DeclareLaunchArgument("depth_action_timeout_s", default_value="60.0"),
             DeclareLaunchArgument("depth_feedback_period_s", default_value="0.5"),
+            DeclareLaunchArgument(
+                "use_gazebo",
+                default_value="false",
+                description="true = drive a running Gazebo sim "
+                "(auv_simulation) via GazeboVehicleAdapter instead of the "
+                "pure-Python VehicleSimModel.",
+            ),
             Node(
                 package="auv_vehicle",
                 executable="vehicle_node",
@@ -48,6 +60,7 @@ def generate_launch_description():
                         "depth_feedback_period_s": LaunchConfiguration(
                             "depth_feedback_period_s"
                         ),
+                        "use_gazebo": LaunchConfiguration("use_gazebo"),
                     }
                 ],
             ),
