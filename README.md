@@ -118,6 +118,8 @@ the map, not the territory.
 
 ## Install
 
+before installing python on whole system consider using python virtual environment for the same for smooth working and no conflicts.
+
 ```bash
 # ROS 2 (Jazzy, for Ubuntu 24.04) if not already installed
 sudo apt install ros-jazzy-desktop
